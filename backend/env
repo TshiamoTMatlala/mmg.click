@@ -1,0 +1,17 @@
+JWT_SECRET = "MightyGGeneral"
+ADMIN_EMAIL = "admin@mgg.click"
+ADMIN_PASSWORD = "mgg123"
+
+MONGODB_URI = "mongodb+srv://africanoby:M1ghtyGenara0449@cluster0.u0b3j.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+
+CLOUDINARY_API_KEY = "813257253861688"
+CLOUDINARY_SECRET_KEY = "enj0eb1e7h43u"
+CLOUDINARY_NAME = "dqrtke2j9"
+
+
+# Change to production when live
+PAYFAST_MERCHANT_ID="25862303"
+PAYFAST_MERCHANT_KEY="be8t2wpumtkco"
+PAYFAST_BASE_URL="http://api.payfast.co.za/eng/process"
+FRONTEND_URL="http://localhost:5173"
+BACKEND_URL="http://localhost:4000"

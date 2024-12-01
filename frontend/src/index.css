@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Prata&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Button animations */
+.btn-animate {
+  @apply transition-all duration-200 ease-in-out transform hover:scale-105 active:scale-95;
+}
+
+/* Input animations */
+.input-animate {
+  @apply transition-all duration-200 ease-in-out;
+  @apply focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50;
+  @apply hover:border-blue-400;
+}
+
+/* Card animations */
+.card-animate {
+  @apply transition-all duration-300 ease-in-out transform hover:shadow-lg hover:-translate-y-1;
+}
+
+/* Success animation */
+@keyframes successPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.success-animate {
+  animation: successPop 0.3s ease-in-out;
+}
+
+/* Loading animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-animate {
+  animation: spin 1s linear infinite;
+}
+
+a.active hr{
+    display: block;
+}
+
+*{
+    font-family: Outfit;
+}
+
+.prata-regular {
+    font-family: "Prata", serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+  ::-webkit-scrollbar{
+    display: none;
+  }
+  
+  @media (max-width:640px) {
+    a.active{
+        background-color: rgb(190, 1, 1);
+        color: white;
+    }
+  }
