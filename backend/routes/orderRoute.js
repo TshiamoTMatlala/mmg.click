@@ -59,3 +59,4 @@ const handlePayFastIPN = async (req, res) => {
 };
 
 export { placeOrderPayFast, handlePayFastIPN };
+export default orderRouter;
