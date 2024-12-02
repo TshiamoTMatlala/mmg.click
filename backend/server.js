@@ -19,7 +19,7 @@ connectCloudinary();
 
 // Middleware
 app.use(express.json());
-app.use(bodyParser.json()); // For parsing JSON payloads
+app.use(bodyParser.json()); // Handles JSON payloads
 app.use(cors());
 
 // PayFast Configuration
@@ -73,7 +73,11 @@ app.use('/api/product', productRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/order', orderRouter);
 
-app.get('/', (req, res) => res.send('API is Working'));
+app.get('/', (req, res) => {
+  res.send('API is Working');
+});
 
 // Start Server
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
