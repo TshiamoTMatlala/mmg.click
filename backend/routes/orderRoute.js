@@ -1,83 +1,63 @@
 import express from 'express';
-import cors from 'cors';
-import bodyParser from 'body-parser';
-import 'dotenv/config';
-import PayFast from 'payfast';
-import connectDB from './config/mongodb.js';
-import connectCloudinary from './config/cloudinary.js';
-import userRouter from './routes/userRoute.js';
-import productRouter from './routes/productRoute.js';
-import cartRouter from './routes/cartRoute.js';
-import orderRouter from './routes/orderRoute.js';
+import crypto from 'crypto';
+import orderModel from '../models/orderModel.js';
 
-const app = express();
-const PORT = process.env.PORT || 4000;
+const router = express.Router();
 
-// Database and Cloudinary Setup
-connectDB();
-connectCloudinary();
-
-// Middleware
-app.use(express.json());
-app.use(bodyParser.json()); // Handles JSON payloads
-app.use(cors());
-
-// PayFast Configuration
-const payfastConfig = {
-  merchantId: process.env.PAYFAST_MERCHANT_ID, // Use environment variables for sensitive data
-  merchantKey: process.env.PAYFAST_MERCHANT_KEY,
-  passPhrase: process.env.PAYFAST_PASSPHRASE || '', // Optional passphrase
-  sandbox: true, // Set to `false` for production
-};
-
-const payfast = new PayFast(payfastConfig);
-
-// PayFast Payment Endpoint
-app.post('/api/payment', (req, res) => {
+// Controller for placing an order using PayFast
+const placeOrderPayFast = async (req, res) => {
   try {
-    const paymentData = {
-      amount: req.body.amount,
-      itemName: req.body.itemName,
-      returnUrl: req.body.returnUrl,
-      cancelUrl: req.body.cancelUrl,
-      notifyUrl: req.body.notifyUrl,
+    const { userId, items, amount, address } = req.body;
+
+    const orderData = {
+      userId,
+      items,
+      address,
+      amount,
+      paymentMethod: 'PayFast',
+      payment: false,
+      date: Date.now(),
     };
 
-    const paymentUrl = payfast.getPaymentUrl(paymentData);
-    res.status(200).json({ paymentUrl });
-  } catch (error) {
-    console.error('Error initiating payment:', error.message);
-    res.status(500).json({ error: 'Failed to initiate payment' });
-  }
-});
+    const newOrder = new orderModel(orderData);
+    await newOrder.save();
 
-// PayFast Response Handling
-app.post('/api/payment/response', (req, res) => {
+    const payfastData = {
+      merchant_id: process.env.PAYFAST_MERCHANT_ID,
+      merchant_key: process.env.PAYFAST_MERCHANT_KEY,
+      return_url: `${process.env.FRONTEND_URL}/verify?success=true&orderId=${newOrder._id}`,
+      cancel_url: `${process.env.FRONTEND_URL}/verify?success=false&orderId=${newOrder._id}`,
+      notify_url: `${process.env.BACKEND_URL}/api/order/payfast/notify`,
+      amount,
+      item_name: `Order #${newOrder._id}`,
+    };
+
+    const queryString = new URLSearchParams(payfastData).toString();
+    const signature = crypto.createHash('md5').update(queryString).digest('hex');
+
+    const paymentUrl = `${process.env.PAYFAST_BASE_URL}?${queryString}&signature=${signature}`;
+    res.status(200).json({ success: true, paymentUrl });
+  } catch (error) {
+    console.error('Error initializing PayFast payment:', error);
+    res.status(500).json({ success: false, message: 'Payment initialization failed.' });
+  }
+};
+
+// Controller for handling PayFast IPN (Instant Payment Notification)
+const handlePayFastIPN = async (req, res) => {
   try {
-    const paymentResponse = payfast.getPaymentResponse(req.body);
-
-    if (paymentResponse.isValid()) {
-      res.status(200).send('Payment successful');
-    } else {
-      res.status(400).send('Payment failed');
-    }
+    const { orderId } = req.body;
+    await orderModel.findByIdAndUpdate(orderId, { payment: true });
+    res.status(200).send('Payment successful');
   } catch (error) {
-    console.error('Error handling payment response:', error.message);
-    res.status(500).json({ error: 'Failed to handle payment response' });
+    console.error('Error handling PayFast IPN:', error.message);
+    res.status(500).json({ error: 'Failed to handle payment notification' });
   }
-});
+};
 
-// API Endpoints
-app.use('/api/user', userRouter);
-app.use('/api/product', productRouter);
-app.use('/api/cart', cartRouter);
-app.use('/api/order', orderRouter);
+// Define Routes
+router.post('/payfast/place', placeOrderPayFast);
+router.post('/payfast/notify', handlePayFastIPN);
 
-app.get('/', (req, res) => {
-  res.send('API is Working');
-});
-
-// Start Server
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// Export the router as the default export
+export default router;
